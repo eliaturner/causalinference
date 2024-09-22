@@ -4,9 +4,29 @@ import torch.optim as optim
 import time
 import numpy as np
 
+import torch
+import torch.nn as nn
+
+
+class MaskedMSELoss(nn.Module):
+    def __init__(self):
+        super(MaskedMSELoss, self).__init__()
+
+    def forward(self, y_pred, y_true):
+        # Create a mask that is 1 where y_true is not nan and 0 where y_true is nan
+        mask = ~torch.isnan(y_true)
+
+        # Apply the mask to y_pred and y_true
+        y_pred_masked = y_pred[mask]
+        y_true_masked = y_true[mask]
+
+        # Compute MSE only for non-nan values
+        loss = nn.functional.mse_loss(y_pred_masked, y_true_masked)
+        return loss
+
 class MyRNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, bias=True, dropout=0, nonlinearity='tanh', 
-                 initialize_uniform=False, initialize_normal=False, g=0.0):
+                 initialize_uniform=False, initialize_normal=False, g=1.0):
         super(MyRNN, self).__init__()
         
         self.hidden_dim = hidden_dim
@@ -30,7 +50,7 @@ class MyRNN(nn.Module):
         return out, hidden
 
 
-def train(model, train_loader, val_loader=None, criterion='mse', device='cpu', lr=1e-3, epochs=100, log=False):
+def train(model, train_loader, val_loader=None, criterion='mse', device='cpu', lr=1e-3, epochs=100, log=True):
     model.to(device)
     train_loss_array = []
     val_loss_array = []
@@ -39,7 +59,7 @@ def train(model, train_loader, val_loader=None, criterion='mse', device='cpu', l
     
     # Set criterion based on input
     if criterion == 'mse':
-        criterion_fn = nn.MSELoss()
+        criterion_fn = MaskedMSELoss()
     elif criterion == 'ce':
         criterion_fn = nn.CrossEntropyLoss()
     else:
@@ -69,10 +89,13 @@ def train(model, train_loader, val_loader=None, criterion='mse', device='cpu', l
             val_loss_array.append(val_loss)
 
         if log:
-            print(f'Epoch {ep + 1}, 
-                    Train Loss: {train_loss_array[-1]:.4f},
-                    Val Loss: {val_loss_array[-1]:.4f}, 
-                    Time: {time.time() - start_time:.1f}s')
+            print(f'Epoch {ep + 1}',
+                    f'Train Loss: {train_loss_array[-1]:.6f}')
+                    # f'Val Loss: {val_loss_array[-1]:.4f}',
+                    # f'Time: {time.time() - start_time:.1f}s')
+
+        if train_loss_array[-1] < 1e-4:
+            break
 
     return train_loss_array, val_loss_array
 

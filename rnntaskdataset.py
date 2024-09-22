@@ -22,6 +22,7 @@ class RNNTaskDataset:
                 x[trial, ready_time:ready_time + pulse_duration, 0] = 1  # Ready pulse on channel 0
                 x[trial, set_time:set_time + pulse_duration, 1] = 1  # Set pulse on channel 1
                 y[trial, go_time:go_time + pulse_duration, 0] = 1  # Go response on output
+                y[trial, :go_time, 0] = 0
 
         return x, y
 
@@ -31,14 +32,25 @@ class RNNTaskDataset:
 
         for trial in range(self.n_trials):
             pulse_duration = 5
-            start_time = np.random.randint(10, self.time // 4)
-            pulse_amplitude = np.random.uniform(0.2, 1.0)  # Amplitude from a range
-            x[trial, start_time:start_time + pulse_duration, 0] = pulse_amplitude
+            # Randomly choose start times for two pulses
+            start_time1 = np.random.randint(10, self.time // 4)
+            start_time2 = start_time1 + np.random.randint(10, self.time // 4)
 
-            if pulse_amplitude < 0.6:  # Weak pulse
-                y[trial, start_time + pulse_duration:, 0] = -1
-            else:  # Strong pulse
-                y[trial, start_time + pulse_duration:, 0] = 1
+            # Generate two pulse amplitudes
+            pulse_amplitude1 = np.random.uniform(0.2, 1.0)  # Amplitude from a range
+            pulse_amplitude2 = np.random.uniform(0.2, 1.0)  # Amplitude from a range
+
+            # Apply pulses to input channels
+            x[trial, start_time1:start_time1 + pulse_duration, 0] = pulse_amplitude1
+            x[trial, start_time2:start_time2 + pulse_duration, 1] = pulse_amplitude2
+
+            # Compare the two pulse amplitudes and set output
+            if pulse_amplitude2 > pulse_amplitude1:
+                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 10, 0] = 1  # Second pulse larger
+            else:
+                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 10, 0] = -1  # First pulse larger
+
+            y[trial, :start_time2 + pulse_duration, 0] = 0
 
         return x, y
 
@@ -109,16 +121,18 @@ class RNNTaskDataset:
         plt.show()
 
 
-# Example usage:
-task_dataset = RNNTaskDataset(n_trials=100, time=200, n_channels=2)
 
-ready_set_go_x, ready_set_go_y = task_dataset.ready_set_go()
-delay_discrimination_x, delay_discrimination_y = task_dataset.delay_discrimination()
-flip_flop_x, flip_flop_y = task_dataset.flip_flop()
-evidence_accumulation_x, evidence_accumulation_y = task_dataset.evidence_accumulation()
+if __name__ == '__main__':
+    # Example usage:
+    task_dataset = RNNTaskDataset(n_trials=100, time=200, n_channels=2)
 
-# Plot each task to verify
-task_dataset.plot_task(ready_set_go_x, ready_set_go_y, "Ready Set Go")
-task_dataset.plot_task(delay_discrimination_x, delay_discrimination_y, "Delay Discrimination")
-task_dataset.plot_task(flip_flop_x, flip_flop_y, "Flip Flop")
-task_dataset.plot_task(evidence_accumulation_x, evidence_accumulation_y, "Evidence Accumulation")
+    ready_set_go_x, ready_set_go_y = task_dataset.ready_set_go()
+    delay_discrimination_x, delay_discrimination_y = task_dataset.delay_discrimination()
+    flip_flop_x, flip_flop_y = task_dataset.flip_flop()
+    evidence_accumulation_x, evidence_accumulation_y = task_dataset.evidence_accumulation()
+
+    # Plot each task to verify
+    task_dataset.plot_task(ready_set_go_x, ready_set_go_y, "Ready Set Go")
+    task_dataset.plot_task(delay_discrimination_x, delay_discrimination_y, "Delay Discrimination")
+    task_dataset.plot_task(flip_flop_x, flip_flop_y, "Flip Flop")
+    task_dataset.plot_task(evidence_accumulation_x, evidence_accumulation_y, "Evidence Accumulation")
