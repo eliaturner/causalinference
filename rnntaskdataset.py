@@ -23,6 +23,7 @@ class RNNTaskDataset:
                 x[trial, set_time:set_time + pulse_duration, 1] = 1  # Set pulse on channel 1
                 y[trial, go_time:go_time + pulse_duration, 0] = 1  # Go response on output
                 y[trial, :go_time, 0] = 0
+                # y[trial, go_time + pulse_duration:, 0] = 1
 
         return x, y
 
@@ -95,6 +96,17 @@ class RNNTaskDataset:
 
         return x, y
 
+    def integrator(self):
+        n_channels = 1
+        x = np.zeros((self.n_trials, self.time, 1))
+        y = np.zeros((self.n_trials, self.time, 1))
+
+        for n in range(self.n_trials):
+            x[n, 1:] = np.random.randint(2, size=sequence_length - 1) * 2 - 1
+            y[n, 1:] = np.cumsum(x[n, 1:])
+
+        return x, y
+
     def plot_task(self, x, y, title):
         time_steps = np.arange(x.shape[1])
 
@@ -124,7 +136,7 @@ class RNNTaskDataset:
 
 if __name__ == '__main__':
     # Example usage:
-    task_dataset = RNNTaskDataset(n_trials=100, time=200, n_channels=2)
+    task_dataset = RNNTaskDataset(n_trials=200, time=150, n_channels=2)
 
     ready_set_go_x, ready_set_go_y = task_dataset.ready_set_go()
     delay_discrimination_x, delay_discrimination_y = task_dataset.delay_discrimination()
