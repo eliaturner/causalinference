@@ -16,7 +16,7 @@ g_values = [0.1, 0.5, 0.9]
 # g_values = [0.5]
 # g_values = [1]
 # nonlinearities = ['tanh']
-nonlinearities = ['tanh']
+nonlinearities = ['relu']
 # tasks = ['ready_set_go']
 tasks = ['ready_set_go', 'delay_discrimination', 'flip_flop', 'integrator']
 
