@@ -27,7 +27,7 @@ os.makedirs(weights_folder, exist_ok=True)
 # Maximum number of retries if training doesn't converge
 
 # Training settings
-epochs = 2000
+epochs = 5000
 batch_size = 32
 learning_rate = 1e-3
 

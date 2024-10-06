@@ -145,7 +145,6 @@ from torch.utils.data import DataLoader, TensorDataset
 import torch.nn as nn
 import os
 
-# Helper function to check convergenc
 def train_multiple_rnns(**hyperparameters):
     hidden_dims = hyperparameters["hidden_dims"]
     initialization_types = hyperparameters["initialization_types"]
@@ -167,6 +166,8 @@ def train_multiple_rnns(**hyperparameters):
                     for task in tasks:
                         retries = 0
                         converged = False
+                        best_trial_loss = float('inf')  # Track the best loss across all trials
+                        best_trial_weights = None  # Track the best weights across all trials
 
                         # Load the task dataset
                         task_dataset = task_dataset_class(n_trials=200, time=100, n_channels=2)
@@ -219,7 +220,7 @@ def train_multiple_rnns(**hyperparameters):
                                 # Check if current loss is better than the best loss
                                 if avg_loss < best_loss:
                                     best_loss = avg_loss
-                                    best_weights = model.state_dict()  # Save the best weights
+                                    best_weights = model.state_dict()  # Save the best weights for this retry
                                     epochs_since_improvement = 0
                                     print(f"New best loss: {best_loss:.4f} at epoch {epoch+1}")
                                 else:
@@ -247,6 +248,11 @@ def train_multiple_rnns(**hyperparameters):
                             if not converged:
                                 retries += 1
                                 print(f"Training failed to converge. Retrying... ({retries}/{max_retries})")
+
+                                # Keep track of the best weights and loss from the failed trial
+                                if best_loss < best_trial_loss:
+                                    best_trial_loss = best_loss
+                                    best_trial_weights = best_weights
                             else:
                                 print(f"Training converged successfully!")
 
@@ -255,3 +261,10 @@ def train_multiple_rnns(**hyperparameters):
                                 torch.save(best_weights, save_path)
                                 print(f"Best model weights saved to: {save_path}")
                                 break  # Exit the retry loop after successful convergence
+
+                        # If all retries fail, save the best weights across all failed trials
+                        if not converged:
+                            print(f"All retries failed. Saving the best model from failed trials with loss {best_trial_loss:.4f}.")
+                            save_path = os.path.join(weights_folder, f"best_failed_weights_{hidden_dim}_{init_type}_g{g}_{nonlinearity}_{task}.pt")
+                            torch.save(best_trial_weights, save_path)
+                            print(f"Best failed trial weights saved to: {save_path}")

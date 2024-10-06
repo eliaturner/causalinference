@@ -97,12 +97,11 @@ class RNNTaskDataset:
         return x, y
 
     def integrator(self):
-        n_channels = 1
         x = np.zeros((self.n_trials, self.time, 1))
         y = np.zeros((self.n_trials, self.time, 1))
 
         for n in range(self.n_trials):
-            x[n, 1:] = np.random.randint(2, size=sequence_length - 1) * 2 - 1
+            x[n, 1:] = np.random.randint(2, size=self.time - 1) * 2 - 1
             y[n, 1:] = np.cumsum(x[n, 1:])
 
         return x, y
