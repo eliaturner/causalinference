@@ -18,7 +18,8 @@ g_values = [0.1, 0.5, 0.9]
 # nonlinearities = ['tanh']
 nonlinearities = ['relu']
 # tasks = ['ready_set_go']
-tasks = ['ready_set_go', 'delay_discrimination', 'flip_flop', 'integrator']
+tasks = ['ready_set_go', 'delay_discrimination', 'integrator']
+# tasks = ['ready_set_go', 'delay_discrimination', 'flip_flop', 'integrator']
 
 # Create a folder to save weights
 weights_folder = "rnn_weights"
