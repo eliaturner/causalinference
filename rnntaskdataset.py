@@ -21,7 +21,7 @@ class RNNTaskDataset:
             if go_time + pulse_duration < self.time:
                 x[trial, ready_time:ready_time + pulse_duration, 0] = 1  # Ready pulse on channel 0
                 x[trial, set_time:set_time + pulse_duration, 1] = 1  # Set pulse on channel 1
-                y[trial, go_time:go_time + pulse_duration, 0] = 1  # Go response on output
+                y[trial, go_time:, 0] = 1  # Go response on output
                 y[trial, :go_time, 0] = 0
                 # y[trial, go_time + pulse_duration:, 0] = 1
 
@@ -47,11 +47,11 @@ class RNNTaskDataset:
 
             # Compare the two pulse amplitudes and set output
             if pulse_amplitude2 > pulse_amplitude1:
-                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 10, 0] = 1  # Second pulse larger
+                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 20, 0] = 1  # Second pulse larger
             else:
-                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 10, 0] = -1  # First pulse larger
+                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 20, 0] = -1  # First pulse larger
 
-            y[trial, :start_time2 + pulse_duration, 0] = 0
+            y[trial, :start_time2 + pulse_duration + 4, 0] = 0
 
         return x, y
 
@@ -102,7 +102,7 @@ class RNNTaskDataset:
 
         for n in range(self.n_trials):
             x[n, 1:, 0] = np.random.randint(2, size=self.time - 1) * 2 - 1
-            y[n, 1:, 0] = np.cumsum(x[n, 1:])
+            y[n, 1:, 0] = 0.1 * np.cumsum(x[n, 1:])
 
         return x, y
 
