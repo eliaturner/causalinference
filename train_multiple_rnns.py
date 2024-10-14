@@ -158,6 +158,10 @@ def train_multiple_rnns(**hyperparameters):
     max_retries = hyperparameters["max_retries"]
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(device)
+    if device == 'cuda' and nonlinearities[0] == 'relu':
+        torch.cuda.set_device(0)
+    if device == 'cuda' and nonlinearities[0] == 'tanh':
+        torch.cuda.set_device(1)
     weights_folder = hyperparameters["weights_folder"]
 
     for hidden_dim in hidden_dims:
