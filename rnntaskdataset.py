@@ -101,8 +101,8 @@ class RNNTaskDataset:
         y = np.zeros((self.n_trials, self.time, 1))
 
         for n in range(self.n_trials):
-            x[n, 1:] = np.random.randint(2, size=self.time - 1) * 2 - 1
-            y[n, 1:] = np.cumsum(x[n, 1:])
+            x[n, 1:, 0] = np.random.randint(2, size=self.time - 1) * 2 - 1
+            y[n, 1:, 0] = np.cumsum(x[n, 1:])
 
         return x, y
 
