@@ -157,6 +157,7 @@ def train_multiple_rnns(**hyperparameters):
     learning_rate = hyperparameters["learning_rate"]
     max_retries = hyperparameters["max_retries"]
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(device)
     weights_folder = hyperparameters["weights_folder"]
 
     for hidden_dim in hidden_dims:
