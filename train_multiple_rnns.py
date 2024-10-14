@@ -220,7 +220,8 @@ def train_multiple_rnns(**hyperparameters):
                                 loss_history.append(avg_loss)  # Record loss for this epoch
 
                                 # Print the current loss at each epoch
-                                print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
+                                if epoch % 15 == 0:
+                                    print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
 
                                 # Check if current loss is better than the best loss
                                 if avg_loss < best_loss:
