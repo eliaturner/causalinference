@@ -115,7 +115,7 @@ def train_multiple_rnns(**hyperparameters):
                                 loss_history.append(avg_loss)  # Record loss for this epoch
 
                                 # Print the current loss at each epoch
-                                if epoch % 15 == 0:
+                                if epoch % 20 == 0:
                                     print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
 
                                 # Check if current loss is better than the best loss
@@ -128,7 +128,7 @@ def train_multiple_rnns(**hyperparameters):
                                     epochs_since_improvement += 1
 
                                 # If no improvement for 50 epochs, reset weights and reduce learning rate
-                                if epochs_since_improvement > 50:
+                                if epochs_since_improvement > 100:
                                     print(f"No improvement for 50 epochs. Reverting to best weights and reducing learning rate.")
                                     model.load_state_dict(best_weights)  # Restore best weights
                                     current_lr /= 2  # Reduce learning rate

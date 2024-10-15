@@ -47,9 +47,9 @@ class RNNTaskDataset:
 
             # Compare the two pulse amplitudes and set output
             if pulse_amplitude2 > pulse_amplitude1:
-                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 20, 0] = 1  # Second pulse larger
+                y[trial, start_time2 + pulse_duration + 5:, 0] = 1  # Second pulse larger
             else:
-                y[trial, start_time2 + pulse_duration + 5: start_time2 + pulse_duration + 20, 0] = -1  # First pulse larger
+                y[trial, start_time2 + pulse_duration + 5:, 0] = -1  # First pulse larger
 
             y[trial, :start_time2 + pulse_duration + 4, 0] = 0
 
