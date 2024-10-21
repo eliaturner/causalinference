@@ -28,8 +28,8 @@ class RNNTaskDataset:
         return x, y
 
     def delay_discrimination(self):
-        x = np.zeros((self.n_trials, self.time, self.n_channels))
-        y = np.full((self.n_trials, self.time, 1), np.nan)  # Output with 1 channel
+        x = np.zeros((self.n_trials, self.time, self.n_channels-1)) #################################################################
+        y = np.full((self.n_trials, self.time, 1), 0)  # Output with 1 channel
 
         for trial in range(self.n_trials):
             pulse_duration = 5
@@ -38,20 +38,29 @@ class RNNTaskDataset:
             start_time2 = start_time1 + np.random.randint(10, self.time // 4)
 
             # Generate two pulse amplitudes
-            pulse_amplitude1 = np.random.uniform(0.2, 1.0)  # Amplitude from a range
-            pulse_amplitude2 = np.random.uniform(0.2, 1.0)  # Amplitude from a range
+            pulse_amplitude1 = np.random.uniform(0.5, 1.5)  # Amplitude from a range
+            pulse_amplitude2 = np.random.uniform(0.5, 1.5)  # Amplitude from a range
 
+            diff = np.abs(pulse_amplitude1-pulse_amplitude2)
+
+            while diff<0.2:
+                pulse_amplitude1 = np.random.uniform(0.5, 1.5)  # Amplitude from a range
+                pulse_amplitude2 = np.random.uniform(0.5, 1.5)  # Amplitude from a range
+                diff = np.abs(pulse_amplitude1-pulse_amplitude2)
+                
             # Apply pulses to input channels
             x[trial, start_time1:start_time1 + pulse_duration, 0] = pulse_amplitude1
-            x[trial, start_time2:start_time2 + pulse_duration, 1] = pulse_amplitude2
+            x[trial, start_time2:start_time2 + pulse_duration, 0] = pulse_amplitude2
 
+            # x[trial, start_time2 + pulse_duration + 5: , 2] = 1 #################################################################
+ 
             # Compare the two pulse amplitudes and set output
             if pulse_amplitude2 > pulse_amplitude1:
                 y[trial, start_time2 + pulse_duration + 5:, 0] = 1  # Second pulse larger
             else:
                 y[trial, start_time2 + pulse_duration + 5:, 0] = -1  # First pulse larger
 
-            y[trial, :start_time2 + pulse_duration + 4, 0] = 0
+            y[trial, start_time2 + pulse_duration + 5 + 5:, 0] = 0 #################################################################
 
         return x, y
 
@@ -72,29 +81,6 @@ class RNNTaskDataset:
 
         return x, y
 
-    def evidence_accumulation(self):
-        x = np.zeros((self.n_trials, self.time, self.n_channels))
-        y = np.full((self.n_trials, self.time, 1), np.nan)  # Output with 1 channel
-
-        for trial in range(self.n_trials):
-            pulses_ch1 = np.random.randint(3, 10)  # Random number of pulses for channel 1
-            pulses_ch2 = np.random.randint(3, 10)  # Random number of pulses for channel 2
-            pulse_duration = 5
-
-            pulse_times_ch1 = np.random.choice(np.arange(self.time - pulse_duration), pulses_ch1, replace=False)
-            pulse_times_ch2 = np.random.choice(np.arange(self.time - pulse_duration), pulses_ch2, replace=False)
-
-            for t in pulse_times_ch1:
-                x[trial, t:t + pulse_duration, 0] = 1  # Pulses on channel 1
-            for t in pulse_times_ch2:
-                x[trial, t:t + pulse_duration, 1] = 1  # Pulses on channel 2
-
-            if pulses_ch1 > pulses_ch2:
-                y[trial, -pulse_duration:, 0] = 1  # Positive response
-            else:
-                y[trial, -pulse_duration:, 0] = -1  # Negative response
-
-        return x, y
 
     def integrator(self):
         x = np.zeros((self.n_trials, self.time, 1))
@@ -130,7 +116,6 @@ class RNNTaskDataset:
 
         plt.tight_layout()
         plt.show()
-
 
 
 if __name__ == '__main__':
