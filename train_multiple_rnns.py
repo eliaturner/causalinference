@@ -33,11 +33,9 @@ class MaskedMSELoss(nn.Module):
         return loss
 
 
-
 # Helper function to check convergence
 def has_converged(loss_array, threshold=1e-4):
     return min(loss_array) < threshold
-
 
 
 def train_multiple_rnns(**hyperparameters):
@@ -70,7 +68,7 @@ def train_multiple_rnns(**hyperparameters):
                         best_trial_weights = None  # Track the best weights across all trials
 
                         # Load the task dataset
-                        task_dataset = task_dataset_class(n_trials=200, time=100, n_channels=2)
+                        task_dataset = task_dataset_class(n_trials=1000, time=100, n_channels=2) ####################################
                         x, y = getattr(task_dataset, task)()
                         x_tensor = torch.tensor(x, dtype=torch.float32)
                         y_tensor = torch.tensor(y, dtype=torch.float32)
