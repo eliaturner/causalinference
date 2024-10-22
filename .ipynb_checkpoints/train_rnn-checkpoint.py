@@ -41,7 +41,7 @@ class MyRNN(nn.Module):
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
         if initialize_uniform:
-            wrec = g * np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
+            wrec = np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
     def forward(self, x, hidden=None):
@@ -114,7 +114,7 @@ def eval_model(model, val_loader, criterion, device='cpu'):
     return running_loss / len(val_loader)
 
 
-def simulate_with_lesions(model, X, y, percentage_of_lesions, criterion='mse', device='cpu'):
+def simulate_with_lesions(model, X, y, percentage_of_lesions, num_of_runs=1, criterion='mse', device='cpu'):
 
     # Move model and data to device
     model.to(device)
@@ -122,37 +122,43 @@ def simulate_with_lesions(model, X, y, percentage_of_lesions, criterion='mse', d
 
     # Define criterion based on input
     if criterion == 'mse':
-        criterion_fn = nn.MSELoss()
+        criterion_fn = MaskedMSELoss()
     elif criterion == 'ce':
         criterion_fn = nn.CrossEntropyLoss()
     else:
         raise ValueError(f"Unsupported criterion: {criterion}")
 
-    # Copy the original recurrent weight to modify it
-    original_weights = model.rnn.weight_hh_l0.data.clone()
+    all_loss = [] 
+    for i in range(num_of_runs):
+
+        # Copy the original recurrent weight to modify it
+        original_weights = model.rnn.weight_hh_l0.clone()
     
-    # Number of recurrent weights to zero out
-    num_weights = original_weights.numel()
-    num_lesions = int(percentage_of_lesions * num_weights)
+        # Number of recurrent weights to zero out
+        num_weights = original_weights.numel()
+        num_lesions = int(percentage_of_lesions * num_weights)
+    
+        # Randomly select indices to lesion (set to zero)
+        lesion_indices = np.random.choice(num_weights, num_lesions, replace=False)
+    
+        # Flatten the weights to manipulate and lesion the selected indices
+        flattened_weights = original_weights.view(-1).clone()
+        flattened_weights[lesion_indices] = 0
+    
+        # Assign lesioned weights back to the model
+        with torch.no_grad():
+            model.rnn.weight_hh_l0.copy_(flattened_weights.view_as(original_weights))
+    
+        # Evaluate the model with the lesioned weights
+        model.eval()
+        with torch.no_grad():
+            y_pred, _ = model(X)
+            loss = criterion_fn(y_pred, y_true)
 
-    # Randomly select indices to lesion (set to zero)
-    lesion_indices = np.random.choice(num_weights, num_lesions, replace=False)
+        all_loss.append(loss.item())
+    
+        # Restore the original weights after simulation
+        with torch.no_grad():
+            model.rnn.weight_hh_l0.copy_(original_weights)
 
-    # Flatten the weights to manipulate and lesion the selected indices
-    flattened_weights = original_weights.view(-1)
-    flattened_weights[lesion_indices] = 0
-
-    # Reshape and assign lesioned weights back to the model
-    model.rnn.weight_hh_l0.data = flattened_weights.view_as(original_weights)
-
-    # Evaluate the model with the lesioned weights
-    model.eval()
-    with torch.no_grad():
-        y_pred, _ = model(X)
-        loss = criterion_fn(y_pred, y_true)
-
-    # Restore the original weights after simulation
-    model.rnn.weight_hh_l0.data = original_weights
-
-    return loss.item()
-
+    return all_loss

@@ -41,7 +41,7 @@ class MyRNN(nn.Module):
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
         if initialize_uniform:
-            wrec = g * np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
+            wrec = np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
     def forward(self, x, hidden=None):
