@@ -7,22 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-
-class MaskedMSELoss(nn.Module):
-    def __init__(self):
-        super(MaskedMSELoss, self).__init__()
-
-    def forward(self, y_pred, y_true):
-        # Create a mask that is 1 where y_true is not nan and 0 where y_true is nan
-        mask = ~torch.isnan(y_true)
-
-        # Apply the mask to y_pred and y_true
-        y_pred_masked = y_pred[mask]
-        y_true_masked = y_true[mask]
-
-        # Compute MSE only for non-nan values
-        loss = nn.functional.mse_loss(y_pred_masked, y_true_masked)
-        return loss
+from masked_MSE_loss import MaskedMSELoss
 
 class MyRNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, bias=True, dropout=0, nonlinearity='tanh', 
@@ -41,12 +26,39 @@ class MyRNN(nn.Module):
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
         if initialize_uniform:
-            wrec = np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
+            wrec = g * np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
-    def forward(self, x, hidden=None):
-        out, hidden = self.rnn(x, hidden)
-        out = self.out(out)
+        self.noise_std = 0.01
+
+
+    # def forward(self, x, hidden=None):
+    #     out, hidden = self.rnn(x, hidden)
+    #     out = self.out(out)
+    #     return out, hidden
+
+    def forward(self, x, hidden=None, inject_noise=False):
+        out_list = []
+        seq_len = x.size(1)  # Get the sequence length
+
+        for t in range(seq_len):
+            # Get the input for the current time step
+            x_t = x[:, t].unsqueeze(1)
+
+            # Step forward through the RNN
+            out_t, hidden = self.rnn(x_t, hidden)
+
+            # Inject noise into the hidden state if enabled
+            if inject_noise and self.noise_std > 0:
+                noise = torch.randn_like(hidden) * self.noise_std
+                hidden = hidden + noise
+
+            out_t = self.out(out_t)  # Compute output for this step
+            out_list.append(out_t)
+
+        # Concatenate outputs for all time steps
+        out = torch.cat(out_list, dim=1)
+
         return out, hidden
 
 
