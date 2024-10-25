@@ -26,7 +26,7 @@ class MyRNN(nn.Module):
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
         if initialize_uniform:
-            wrec = np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
+            wrec = g * np.random.uniform(low=-1/np.sqrt(hidden_dim), high=1/np.sqrt(hidden_dim), size=(hidden_dim, hidden_dim))
             self.rnn.weight_hh_l0 = nn.Parameter(torch.from_numpy(wrec).float())
 
         self.noise_std = 0.01
